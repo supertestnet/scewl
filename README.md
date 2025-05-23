@@ -46,10 +46,10 @@ In a few moments, the users and Reginald will do a “signing ceremony” which 
 
 Because the coinpool will start its life in a state where Reginald has full control of all its funds, the only fair way to fund it is for Reginald to be the sole contributor to the multisig. His money should be the only money going in, otherwise he will get custody of other people's money. Reginald will fund the multisig in such a way that each user’s channel gets an equal-sized amount, which will serve as inbound capacity for that user.
 
+But for now, Reginald simply uses the lightning network to charge each user an initial fee to provide them with this amount of inbound capacity. (See Figure 1.) As a result, each user’s “deposit cost” will be something like 1,000 sats, and this will acquire for them something like 100,000 sats of inbound capacity in their channel. Those two amounts (1,000 and 100,000) are variable and Reginald can adjust them to fit market conditions, but in the rest of this document, I will use them as examples.
+
 ![](https://supertestnet.github.io/scewl/image7.png)  
 Figure 1.
-
-But for now, Reginald simply uses the lightning network to charge each user an initial fee to provide them with this amount of inbound capacity. (See Figure 1.) As a result, each user’s “deposit cost” will be something like 1,000 sats, and this will acquire for them something like 100,000 sats of inbound capacity in their channel. Those two amounts (1,000 and 100,000) are variable and Reginald can adjust them to fit market conditions, but in the rest of this document, I will use them as examples.
 
 It is possible to make the deposit cost atomic, such that the user’s lightning wallet only sends the 1,000 sats if the user receives a channel in the coinpool worth 100,000 sats. But the only way I know how to do that is to set up a submarine swap, which requires a base layer transaction, and in many cases that will push the cost of atomicity above 1,000 sats. Consequently, it may not make sense for users to do this atomically. If it’s non-atomic, the worst that can happen to each user is that Reginald steals their 1,000 sats, whereas doing it atomically – so that he cannot steal – will probably cost each user more than that. But this depends on how much Reginald charges; if he charges a lot, it may be worth it to the users to set up their deposit in an atomic way, so that he cannot steal it.
 
