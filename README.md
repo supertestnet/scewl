@@ -46,7 +46,7 @@ In a few moments, the users and Reginald will do a “signing ceremony” which 
 
 Because the coinpool will start its life in a state where Reginald has full control of all its funds, the only fair way to fund it is for Reginald to be the sole contributor to the multisig. His money should be the only money going in, otherwise he will get custody of other people's money. Reginald will fund the multisig in such a way that each user’s channel gets an equal-sized amount, which will serve as inbound capacity for that user.
 
-
+![](https://supertestnet.github.io/scewl/image7.png)  
 Figure 1.
 
 But for now, Reginald simply uses the lightning network to charge each user an initial fee to provide them with this amount of inbound capacity. (See Figure 1.) As a result, each user’s “deposit cost” will be something like 1,000 sats, and this will acquire for them something like 100,000 sats of inbound capacity in their channel. Those two amounts (1,000 and 100,000) are variable and Reginald can adjust them to fit market conditions, but in the rest of this document, I will use them as examples.
@@ -59,7 +59,7 @@ At this point, the users pay the deposit cost. This cost also encourages them to
 
 Although the users have now paid their deposit cost, Reginald does not yet fund the multisig. First, the users have to do the signing ceremony. The signing ceremony is a period of time during which each user must sign a series of bitcoin transactions, which, together, allow each user to take 100,000 sats out of the multisig and put it into their channel. If any user refuses to sign these, Reginald keeps that person’s money (unless the payment was done atomically) and refunds the others, whereupon the other folks can try again without the offender. (See Figure 2.)
 
-
+![](https://supertestnet.github.io/scewl/image8.png)  
 Figure 2.
 
 By having each user of an N-of-N multisig sign this series of transactions, each user, including Reginald, knows that they can get the money into a channel where they have a key, and once it is in such a channel, the channel logic (to be described in section 13) allows that user (and Reginald) to withdraw their “share” of the channel and get it into an address on bitcoin’s base layer.
@@ -74,7 +74,7 @@ However, it is actually that plus a bit extra, because Reginald’s funding utxo
 
 Here it is in latex format because that’s what whitepapers do:
 
-
+![](https://supertestnet.github.io/scewl/image12.png)
 
 # 6. The exit ladder
 
@@ -90,22 +90,22 @@ To make the exit ladder work, we start by having the users of the coinpool gener
 
 The transaction defining round 1 has a number of outputs equal to 3 + N. (See Figure 3.) The first output puts 240 sats in an anchor address, which, via child-pays-for-parent, will be used to pay the mining fees for the round 1 transaction. The second output puts 100,000 + 240 sats in a “midstate” address to be described momentarily. The third output puts the remainder back in the multisig, ready for use in the next round, minus an amount of sats equal to 294 * N. These sats get divided into N connector outputs with a value of 294 sats apiece. The function of these connector outputs will be described after two more paragraphs.
 
-
+![](https://supertestnet.github.io/scewl/image3.png)  
 Figure 3.
 
 The transactions defining every subsequent round only have 3 outputs apiece (see Figure 4); these are identical to the first three outputs of the first round, except the third returns a smaller remainder to the multisig each time, until, in the last round, there is no third output because there’s nothing to return to the multisig.
 
-
+![](https://supertestnet.github.io/scewl/image20.png)  
 Figure 4.
 
 In each round, the person wishing to withdraw in that round broadcasts the transaction defining that round and pays its fee using the anchor output created in its first output and attaching a fee via child-pays-for-parent. However, the money they wish to withdraw is not yet in the withdrawer’s channel. It is in a midstate address, i.e. an address used when the user is in a state *between* initiating a withdrawal and finally withdrawing.
 
 The midstate address has N script paths, each of which lets a different user spend that utxo, but only with N-of-N signatures, i.e. a signature from every other party; these signatures are generated during the signing ceremony and shared with everyone. These signatures each require two inputs: the midstate address itself and one of the connectors. This is why the number of connectors is equal to the number of users: each one “gets” one, and in each round, they can only withdraw by consuming the connector that is pertinent to them (see Figure 5). Consuming that connector ensures the user cannot withdraw in a subsequent round (see Figure 6); their connector is gone, so the signatures which would have allowed them to withdraw in that round are invalid, because they commit to that connector as a second input, and bitcoin prevents it from being spent twice.
 
-
+![](https://supertestnet.github.io/scewl/image2.png)  
 Figure 5.
 
-
+![](https://supertestnet.github.io/scewl/image16.png)  
 Figure 6.
 
 In this document, these outputs are called “connectors” because they “connect” the signatures allowing for a unilateral withdrawal to bitcoin's consensus rule forbidding doublespending, and thus this consensus rule prevents any user from withdrawing from the coinpool twice.
@@ -124,7 +124,7 @@ Now let us suppose Alice, Bob, and Carol have been using the coinpool for severa
 
 To fix this problem, each round of the exit ladder should have one additional transaction that everyone signs. This transaction lets Reginald take all the money left in the multisig in that round, but the signatures consume two inputs: the multisig itself, and another output – which I call the “countdown output” for reasons to be disclosed in the following paragraph – that Reginald may create at any time (see Figure 7). Moreover, these signatures use the sequence field to ensure that they are only valid if the countdown output has existed for 1 month and the multisig output has existed for 1 week.
 
-
+![](https://supertestnet.github.io/scewl/image15.png)  
 Figure 7.
 
 With these signatures in hand, Reginald no longer has to worry about users becoming unresponsive or making him pay a large amount in mining fees to recover his money. He can just create the countdown output, and that effectively initiates a 1 month countdown. Once that countdown is up, Reginald can take all of the money left in the multisig. The users, until then, can all still exit using their presigned transactions, or via the “happy path.” And each time one of them exits, if the month is already up or about to be up, that exiter effectively adds an additional week to the countdown, which means all of the users have plenty of time to exit. This fixes the problem. Users cannot hold Reginald's funds hostage for longer than 1 month plus N weeks, nor make him kick out every unresponsive person individually and thus pay a large amount in mining fees to recover his share of each channel.
@@ -135,7 +135,7 @@ The exit ladder requires two transaction packages containing two transactions ap
 
 Suppose Alice and Bob both decide they want to exit the coinpool via the exit ladder in the same round. One of them will be the first one to broadcast and pay for the first transaction package – let’s suppose it’s Alice. As soon as Bob sees this package enter the mempool, he can rejoice: Alice already paid the mining fee for the first transaction package, but all that does is put the money in the midstate. Bob, like Alice, has not yet exited the coinpool, so he has not yet consumed his connector, meaning he can withdraw from the midstate just as well as Alice can. So Bob can now enter a race with Alice: who will get to withdraw from the midstate first? (See Figure 8.)
 
-
+![](https://supertestnet.github.io/scewl/image14.png)  
 Figure 8.
 
 Both of their transactions attempting to do so are valid, since neither one has consumed their connector yet, so miners pick the winner. If Bob wins, Alice lost money by paying for the first transaction package, and she will have to do so again and hope that this time, there will be no race condition, or if there is one, she wins it. Note that her ability to exit from any midstate is unaffected by losing a race condition; if she loses the race, that means her connector has not been spent yet, so she can leave in a future round, but still, it sucks that anyone can unfairly lose money just because someone else initiated a race condition.
@@ -150,7 +150,7 @@ When a user exits the coinpool, their money (100,000 sats) goes into a payment c
 
 The channel starts out with all of its funds on Reginald’s side, but if Reginald wishes to send money to the user, he and the user can cosign N state updates, each of which affects one of the potential channels the user will end up with depending on which round he exits in. (See Figure 9.) All N state updates push the same amount of money to the user’s side of a potential channel, so as long as the user validates all N state updates, he knows he will definitely receive that amount in the channel he eventually exits with, no matter which round he exits in.
 
-
+![](https://supertestnet.github.io/scewl/image9.png)  
 Figure 9.
 
 # 10. Receiving money from outside the coinpool
@@ -165,31 +165,31 @@ And now we do an off-chain swap: Alice gives Reginald her secret, and they “re
 
 Voila, Alice received money from a user of bitcoin’s base layer, in such a way that her balance in the coinpool grew from 0 to 5,000 sats. Reginald, meanwhile, “lost” 5,000 sats from “his” side of the channel, but it’s okay because he got compensation: he *received* 5,000 sats from Dave. (See Figure 10.)
 
-
+![](https://supertestnet.github.io/scewl/image13.png)  
 Figure 10.
 
 Alice can use a similar trick to receive money from lightning users. Suppose a lightning user Edna wants to send 6,000 sats to Alice via lightning. Alice can again make up a 32 byte secret and get its hash. She gives its hash to Reginald, who uses his lightning node to create a lightning invoice that he can only settle if he learns Alice’s secret. He shows this invoice to Alice, who shows it to Edna. Edna pays it, but Reginald cannot settle it, due to not knowing Alice’s secret. But then we do a swap again: Reginald creates an HTLC in Alice’s channel whereby she can take 6,000 sats if she discloses the secret. She does so, whereupon she and Reginald resolve the “in-coinpool” HTLC, and Reginald uses the secret to resolve the lightning invoice. Voila, Reginald “lost” 6,000 sats from his side of the channel, but got compensated with 6,000 sats on lightning; Alice effectively received 6,000 sats from Edna, and her coinpool balance went up from 5,000 sats to 11,000 sats. (See Figure 11.)
 
-
+![](https://supertestnet.github.io/scewl/image4.png)  
 Figure 11.
 
 # 11. Sending money to folks outside the coinpool
 
 Alice can use the reverse of the above process to send money to people outside the coinpool. Suppose she wants to send Dave 5,600 sats. Reginald can make up a 32 byte secret, hash it, and create a bitcoin address encoding the following script: Reginald gets the money after 2 weeks, otherwise Alice can take the money if she learns (and discloses) the secret. Reginald funds this address with 5,600 sats. Now, Alice creates an HTLC worth 5,600 sats in her channel with Reginald, such that Reginald can take the money if he discloses the secret. He does so, and they resolve the “in-coinpool” HTLC, meaning Reginald gained 5,600 sats in the coinpool. Now, with the secret in hand, Alice uses it to create a transaction on bitcoin’s base layer sweeping the money from the “on-chain” address and sending it to Dave. Alice’s coinpool balance is now 5,400 sats (11,000 - 5,600 = 5,400). (See Figure 12.)
 
-
+![](https://supertestnet.github.io/scewl/image17.png)  
 Figure 12.
 
 If Alice wants to pay 5,400 sats to Edna via lightning, she can get a lighting invoice from Edna worth 5,400 sats, extract its payment hash, and create an HTLC worth 5,400 sats in her channel with Reginald. Reginald can take the money if he learns (and discloses) the preimage to Edna’s hash, which he learns by paying Edna’s invoice, whereupon he shares it with Alice. They resolve the “in-coinpool” HTLC, meaning Reginald gained 5,400 sats in the coinpool (but lost it on LN by sending it to Edna) and Alice’s balance is now 0. (See Figure 13.)
 
-
+![](https://supertestnet.github.io/scewl/image6.png)  
 Figure 13.
 
 # 12. Sending and receiving inside coinpools and across coinpools
 
 Each user of every coinpool has a payment channel that can send and receive via lightning, as described above. Therefore, they can pay one another via lightning payments. Just as Alice could send money to Edna, a lightning user, she can send money to Bob or Carol, who are in her coinpool, by just doing the same thing she did for Edna. Bob and Carol act like Alice acted when she wanted to *receive* money from Edna, except this time they are receiving it from Alice. Reginald acts as a lightning routing node, routing payments between users of any coinpool he serves, or to users of coinpools served by people *other than* Reginald. (See Figure 14.)
 
-
+![](https://supertestnet.github.io/scewl/image18.png)  
 Figure 14.
 
 # 13. Hedgehog channels
@@ -197,9 +197,6 @@ Figure 14.
 The above protocol works fine with lightning, but there is an alternative type of payment channel that is even better suited for this context, called a hedgehog channel. Hedgehog channels are very similar to lightning channels, but they allow for asynchronous payments, which unlock many new features, such as automatic subscription payments.
 
 Hedgehog channels work like this: suppose Alice and Reginald want to create an initial state where all of the funds are on Reginald’s side. Alice needs to know Reginald’s pubkey and the hash of a secret that only Reginald knows. She already knows his pubkey because it’s the one he gave her earlier when they set up the coinpool multisig, so she only needs to ask him for the hash. With these two piece of data in hand, she creates a transaction putting all of the channel funds in a “pending state” (see Figure 15) encoded in a bitcoin address with a script containing the following logic:
-
-
-Figure 15.
 
 ```
 [
@@ -209,12 +206,12 @@ Figure 15.
 ]
 ```
 
+![](https://supertestnet.github.io/scewl/image19.png)  
+Figure 15.
+
 Using branch one, Alice now creates a second transaction that takes all of the money from this pending state and sends it to Reginald. Having created these two transactions, Alice signs them, but her signature on the second transaction commits to a relative timelock of 2 weeks. She gives both signatures to Reginald, along with the hash of a secret which “she” creates and whose purpose will be described in section 14. If Reginald cosigns the transactions given to him by Alice, he can broadcast them and thus get all of the money out of the channel, after a 2 week delay. Voila, the initial channel state is created: all of the funds are on Reginald’s side of the channel.
 
 Now let us suppose Reginald wants to send 7,000 sats to Alice. He needs to know Alice’s pubkey, which he already knows because it’s the one she gave him earlier when they set up the coinpool multisig, and the hash of her secret, which he already knows because she sent it to him in the previous paragraph. So now Reginald creates a transaction putting all of the channel funds in a new pending state (see Figure 16) with the following logic:
-
-
-Figure 16.
 
 ```
 [
@@ -223,6 +220,9 @@ Figure 16.
    <Reginald can spend if he learns (and discloses) Alice’s secret>,
 ]
 ```
+
+![](https://supertestnet.github.io/scewl/image11.png)  
+Figure 16.
 
 Using branch one, Reginald now creates a second transaction that takes all of the money from this pending state and disperses it like this: Alice gets 7,000 sats and Reginald gets the other 93,000 sats. Having created these two transactions, Reginald signs them, but his signature on the second transaction commits to a relative timelock of 2 weeks. He gives both signatures to Alice, along with the hash of a new secret. If Alice cosigns the transactions given to her by Reginald, she can broadcast them and thus get 7,000 sats out of the channel, after a 2 week delay.
 
@@ -240,12 +240,12 @@ Then he broadcasts a transaction initiating a channel closure by putting the fun
 
 But I don’t like that model because it requires both counterparties to cosign every state transition before either one considers it final, which makes asynchronous payments harder. What I do instead is this: when Reginald sends Alice the signatures for the latest state (the one where she has 17,000 sats), he *also* sends her a signature for a transaction that takes as an input the most recent “prior” state’s pending state (the one where Alice had 7,000 sats), and distributes the funds according to the latest state (the one where Alice has 17,000 sats). That way, if Reginald broadcasts the most recent prior state, Alice can fix it by broadcasting a transaction that “updates” it to the latest state with no penalty (see Figure 17). This allows either party to consider each state update final without waiting for their counterparty to get online. The sender can still broadcast the most recent prior state, but if they do, the recipient is incentivized to “correct” it to the latest state, and they have two weeks to do so.
 
-
+![](https://supertestnet.github.io/scewl/image1.png)  
 Figure 17.
 
 And this is where the secrets come in: to prevent too many prior states from being valid, the next time Reginald sends money to Alice, he also sends along the secret to the pending state two states ago that paid him money. This means it is unsafe for him to broadcast a pending state other than the latest state or the most recent prior state; if he broadcasts any state from before that, Alice can use the secret he disclosed to sweep all funds from the pending state via branch 2. (See Figure 18.) Symmetrically, whenever Alice sends money to Reginald, she also sends along the secret to the pending state two states ago that paid her money. Thus neither party can broadcast “too old” of a state; they can only broadcast the latest state or the most recent prior state, which, if they do the latter, their counterparty can correct it to the latest state with no penalty.
 
-
+![](https://supertestnet.github.io/scewl/image5.png)  
 Figure 18.
 
 # 15. Subscriptions
@@ -256,7 +256,7 @@ The disuse of the absolute timelock field also allows it to be repurposed. For e
 
 She can give all three signatures to Reginald, and as the months tick by, one by one, Reginald can claim these “subscription” payments, even if Alice doesn’t get online again. (See Figure 19.) This allows Alice to subscribe to Reginald’s coinpool without giving up custody of her funds til the signatures become valid, and without needing to come online again when the bill comes due. She can also cancel her subscription at any time by simply exiting the coinpool.
 
-
+![](https://supertestnet.github.io/scewl/image10.png)  
 Figure 19.
 
 A similar trick allows Alice to subscribe to third party services *not* provided by Reginald. If she wants a 12-month subscription to “Bitflix,” a streaming media platform that charges 1,500 sats per month, she can create 12 HTLCs in her channel with Reginald, each worth 1,500 sats, and each locked to a different preimage that only Alice knows. She can use the absolute timelock field on these HTLCs to make each of them claimable by Reginald at the beginning of a different month in the future, but only if he learns the corresponding preimage.
