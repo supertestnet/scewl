@@ -167,9 +167,9 @@
         <p>Hedgehog channels work like this: suppose Alice and Reginald want to create an initial state where all of the funds are on Reginald’s side. Alice needs to know Reginald’s pubkey and the hash of a secret that only Reginald knows. She already knows his pubkey because it’s the one he gave her earlier when they set up the coinpool multisig, so she only needs to ask him for the hash. With these two piece of data in hand, she creates a transaction putting all of the channel funds in a “pending state” (see Figure 15) encoded in a bitcoin address with a script containing the following logic:</p>
         <pre><code>
         [
-            \<Alice and Reginald can spend together\>, //this is called “branch one”
+            &lt;Alice and Reginald can spend together&gt;, //this is called “branch one”
            OR,
-           \<Alice can spend if she learns (and discloses) Reginald’s secret\>, //this is called “branch two”
+           &lt;Alice can spend if she learns (and discloses) Reginald’s secret&gt;, //this is called “branch two”
         ]
         </code></pre>
         <p><img src="https://supertestnet.github.io/scewl/image19.png" alt />  <br />
@@ -178,9 +178,9 @@
         <p>Now let us suppose Reginald wants to send 7,000 sats to Alice. He needs to know Alice’s pubkey, which he already knows because it’s the one she gave him earlier when they set up the coinpool multisig, and the hash of her secret, which he already knows because she sent it to him in the previous paragraph. So now Reginald creates a transaction putting all of the channel funds in a new pending state (see Figure 16) with the following logic:</p>
         <pre><code>
         [
-            \<Alice and Reginald can spend together\>,
+            &lt;Alice and Reginald can spend together&gt;,
            OR,
-           \<Reginald can spend if he learns (and discloses) Alice’s secret\>,
+           &lt;Reginald can spend if he learns (and discloses) Alice’s secret&gt;,
         ]
         </code></pre>
         <p><img src="https://supertestnet.github.io/scewl/image11.png" alt />  <br />
