@@ -62,7 +62,8 @@
         <p>Supposing Reginald wants to do this, this goal can be accomplished in the following manner.</p>
         <h1>3. The multisig</h1>
         <p>Suppose three bitcoin users – whom I shall call Alice, Bob, and Carol – all decide they want to be in a coinpool served by Reginald. They contact Reginald and ask him to set one up. Each user (including Reginald) makes up a keypair whose public key they share with one another. The coinpool will be a multisig consisting of each user’s public key. The bitcoin script looks like this:</p>
-        <pre><code>[
+        <pre><code>
+        [
             alices_key,
             OP_CHECKSIGVERIFY,
             bobs_key,
@@ -90,8 +91,7 @@
         <p>By having each user of an N-of-N multisig sign this series of transactions, each user, including Reginald, knows that they can get the money into a channel where they have a key, and once it is in such a channel, the channel logic (to be described in section 13) allows that user (and Reginald) to withdraw their “share” of the channel and get it into an address on bitcoin’s base layer.</p>
         <p>The signing ceremony depends on each user knowing what utxo will fund the multisig. So at this point, Reginald tells each user what utxo he will use to do that. It must be a utxo worth at least 300,000 sats, so that each user (Alice, Bob, and Carol) gets 100,000 sats in the multisig, which they can withdraw into their channel.</p>
         <p>However, it is actually that plus a bit extra, because Reginald’s funding utxo also has to have enough money to give each user a connector output and two anchor outputs. The meaning and function of these outputs will be described in section 6, concerning the exit ladder. For now, it is enough to say that the connector outputs will each be worth 294 sats (the dust limit for segwit v0 addresses) and the anchor outputs will each be worth 240 sats (the dust limit for anchor addresses), so, in our case, where there are 3 users, Reginald’s funding utxo must be worth at least 302,322 sats:</p>
-        <pre><code>( 100,000 * N ) + ( 294 * N ) + ( 240 * 2N )
-        </code></pre>
+        <pre><code>( 100,000 * N ) + ( 294 * N ) + ( 240 * 2N )</code></pre>
         <p>Here it is in latex format because that’s what whitepapers do:</p>
         <p><img src="https://supertestnet.github.io/scewl/image12.png" alt /></p>
         <h1>6. The exit ladder</h1>
@@ -165,20 +165,22 @@
         <h1>13. Hedgehog channels</h1>
         <p>The above protocol works fine with lightning, but there is an alternative type of payment channel that is even better suited for this context, called a hedgehog channel. Hedgehog channels are very similar to lightning channels, but they allow for asynchronous payments, which unlock many new features, such as automatic subscription payments.</p>
         <p>Hedgehog channels work like this: suppose Alice and Reginald want to create an initial state where all of the funds are on Reginald’s side. Alice needs to know Reginald’s pubkey and the hash of a secret that only Reginald knows. She already knows his pubkey because it’s the one he gave her earlier when they set up the coinpool multisig, so she only needs to ask him for the hash. With these two piece of data in hand, she creates a transaction putting all of the channel funds in a “pending state” (see Figure 15) encoded in a bitcoin address with a script containing the following logic:</p>
-        <pre><code>[
-            <Alice and Reginald can spend together>, //this is called “branch one”
+        <pre><code>
+        [
+            \<Alice and Reginald can spend together\>, //this is called “branch one”
            OR,
-           <Alice can spend if she learns (and discloses) Reginald’s secret>, //this is called “branch two”
+           \<Alice can spend if she learns (and discloses) Reginald’s secret\>, //this is called “branch two”
         ]
         </code></pre>
         <p><img src="https://supertestnet.github.io/scewl/image19.png" alt />  <br />
         Figure 15.</p>
         <p>Using branch one, Alice now creates a second transaction that takes all of the money from this pending state and sends it to Reginald. Having created these two transactions, Alice signs them, but her signature on the second transaction commits to a relative timelock of 2 weeks. She gives both signatures to Reginald, along with the hash of a secret which “she” creates and whose purpose will be described in section 14. If Reginald cosigns the transactions given to him by Alice, he can broadcast them and thus get all of the money out of the channel, after a 2 week delay. Voila, the initial channel state is created: all of the funds are on Reginald’s side of the channel.</p>
         <p>Now let us suppose Reginald wants to send 7,000 sats to Alice. He needs to know Alice’s pubkey, which he already knows because it’s the one she gave him earlier when they set up the coinpool multisig, and the hash of her secret, which he already knows because she sent it to him in the previous paragraph. So now Reginald creates a transaction putting all of the channel funds in a new pending state (see Figure 16) with the following logic:</p>
-        <pre><code>[
-            <Alice and Reginald can spend together>,
+        <pre><code>
+        [
+            \<Alice and Reginald can spend together\>,
            OR,
-           <Reginald can spend if he learns (and discloses) Alice’s secret>,
+           \<Reginald can spend if he learns (and discloses) Alice’s secret\>,
         ]
         </code></pre>
         <p><img src="https://supertestnet.github.io/scewl/image11.png" alt />  <br />
