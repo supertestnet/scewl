@@ -39,6 +39,10 @@
             img {
                 max-width: 100%;
             }
+            .code {
+                white-space: pre-wrap;
+                font-family: monospace;
+            }
             @media screen and (max-width: 600px) {
             }
         </style>
@@ -65,7 +69,7 @@
         <p>Supposing Reginald wants to do this, this goal can be accomplished in the following manner.</p>
         <h1>3. The multisig</h1>
         <p>Suppose three bitcoin users – whom I shall call Alice, Bob, and Carol – all decide they want to be in a coinpool served by Reginald. They contact Reginald and ask him to set one up. Each user (including Reginald) makes up a keypair whose public key they share with one another. The coinpool will be a multisig consisting of each user’s public key. The bitcoin script looks like this:</p>
-        <pre><code>
+        <div class="code">
         [
             alices_key,
             OP_CHECKSIGVERIFY,
@@ -76,7 +80,7 @@
             reginalds_key,
             OP_CHECKSIG,
         ]
-        </code></pre>
+        </div>
         <p>It’s also possible to use the Frost keysharding scheme so that there is only one key, making the multisig look like a singlesig. But in this document I assume the construction uses “regular” multisig, because I find it easier to think about.</p>
         <h1>4. Deposits</h1>
         <p>As mentioned in section 1, each user (Alice, Bob, and Carol) will get a payment channel “inside” the coinpool, and in this channel, the user will have a key and Reginald will have a key. The channel is to be described further in section 13, but for right now, it is enough to describe the payment channel’s initial state: all of the money in the channel will be on Reginald’s side, such that the user has maximum inbound capacity. Consequently, if any user exits the multisig in their initial state, those sats will go into a channel where Reginald controls all of the money.</p>
@@ -169,24 +173,24 @@
         <h1>13. Hedgehog channels</h1>
         <p>The above protocol works fine with lightning, but there is an alternative type of payment channel that is even better suited for this context, called a hedgehog channel. Hedgehog channels are very similar to lightning channels, but they allow for asynchronous payments, which unlock many new features, such as automatic subscription payments.</p>
         <p>Hedgehog channels work like this: suppose Alice and Reginald want to create an initial state where all of the funds are on Reginald’s side. Alice needs to know Reginald’s pubkey and the hash of a secret that only Reginald knows. She already knows his pubkey because it’s the one he gave her earlier when they set up the coinpool multisig, so she only needs to ask him for the hash. With these two piece of data in hand, she creates a transaction putting all of the channel funds in a “pending state” (see Figure 15) encoded in a bitcoin address with a script containing the following logic:</p>
-        <pre><code>
+        <div class="code">
         [
             &lt;Alice and Reginald can spend together&gt;, //this is called “branch one”
            OR,
            &lt;Alice can spend if she learns (and discloses) Reginald’s secret&gt;, //this is called “branch two”
         ]
-        </code></pre>
+        </div>
         <p><img src="https://supertestnet.github.io/scewl/image19.png" alt />  <br />
         Figure 15.</p>
         <p>Using branch one, Alice now creates a second transaction that takes all of the money from this pending state and sends it to Reginald. Having created these two transactions, Alice signs them, but her signature on the second transaction commits to a relative timelock of 2 weeks. She gives both signatures to Reginald, along with the hash of a secret which “she” creates and whose purpose will be described in section 14. If Reginald cosigns the transactions given to him by Alice, he can broadcast them and thus get all of the money out of the channel, after a 2 week delay. Voila, the initial channel state is created: all of the funds are on Reginald’s side of the channel.</p>
         <p>Now let us suppose Reginald wants to send 7,000 sats to Alice. He needs to know Alice’s pubkey, which he already knows because it’s the one she gave him earlier when they set up the coinpool multisig, and the hash of her secret, which he already knows because she sent it to him in the previous paragraph. So now Reginald creates a transaction putting all of the channel funds in a new pending state (see Figure 16) with the following logic:</p>
-        <pre><code>
+        <div class="code">
         [
             &lt;Alice and Reginald can spend together&gt;,
            OR,
            &lt;Reginald can spend if he learns (and discloses) Alice’s secret&gt;,
         ]
-        </code></pre>
+        </div>
         <p><img src="https://supertestnet.github.io/scewl/image11.png" alt />  <br />
         Figure 16.</p>
         <p>Using branch one, Reginald now creates a second transaction that takes all of the money from this pending state and disperses it like this: Alice gets 7,000 sats and Reginald gets the other 93,000 sats. Having created these two transactions, Reginald signs them, but his signature on the second transaction commits to a relative timelock of 2 weeks. He gives both signatures to Alice, along with the hash of a new secret. If Alice cosigns the transactions given to her by Reginald, she can broadcast them and thus get 7,000 sats out of the channel, after a 2 week delay.</p>
