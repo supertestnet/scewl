@@ -85,6 +85,7 @@ The exit ladder is a new construction that allows for unilateral exit from a coi
 - When any user exits, the other users may keep using the coinpool as before, minus one user
 - Each exit consists of 2 base layer transactions, though each of these transactions pays its fee with an anchor output and child-pays-for-parent, so it’s technically 4 transactions divided into 2 packages
 - Each exit must withdraw the same amount from the coinpool as every other exit
+- Prior coinpool models require each user to sign N! transactions (where N is however many people are in the coinpool), but the exit ladder only requires each user to sign N**2 transactions, making them feasible for groups of significant size
 
 To make the exit ladder work, we start by having the users of the coinpool generate and sign N bitcoin transactions, where N is equal to the number of users, in our case, 3. Each user gets a copy of these transactions, with each one defining a “round” (e.g. round 1, round 2...round n).
 
